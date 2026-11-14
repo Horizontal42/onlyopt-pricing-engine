@@ -8,9 +8,10 @@ from decimal import Decimal, ROUND_FLOOR
 from typing import Any, Awaitable, Callable
 
 DISCOUNT_FACTOR = Decimal("0.985")       # скидка 1.5%
-MAX_PRICE_DEVIATION = Decimal("0.30")    # порог отклонения 30%
+MAX_PRICE_DEVIATION = Decimal("0.30")    # допустимый порог отклонения 30%
 MAX_DELIVERY_DAYS = 6                    # максимальный срок доставки
 OWN_SHOP_NAME = "myshop"                 # идентификатор собственного магазина
+CENT = Decimal("0.01")
 
 
 async def recommend_price(
@@ -20,8 +21,8 @@ async def recommend_price(
     timeout_s: float = 2.0,
 ) -> dict[str, Any]:
     """Рекомендует цену на основе предложений конкурентов в соответствии с бизнес-правилами."""
-    curr_p = Decimal(str(current_price))
-    min_p = Decimal(str(min_price))
+    curr_p = Decimal(str(current_price)).quantize(CENT)
+    min_p = Decimal(str(min_price)).quantize(CENT)
 
     # 1. Запрос к источнику с таймаутом и обработкой ошибок
     try:
@@ -40,7 +41,7 @@ async def recommend_price(
         }
 
     if not isinstance(response, dict) or response.get("status") != "success":
-        status = response.get("status") if isinstance(response, dict) else "unknown"
+        status = response.get("status") if isinstance(response, dict) else "invalid_payload"
         return {
             "price": curr_p,
             "decision": "HOLD",
@@ -57,8 +58,9 @@ async def recommend_price(
         for offer in raw_offers
         if isinstance(offer, dict)
         and offer.get("delivery_days") is not None
-        and offer["delivery_days"] <= MAX_DELIVERY_DAYS
+        and 0 <= offer["delivery_days"] <= MAX_DELIVERY_DAYS
         and str(offer.get("seller", "")).strip().casefold() != OWN_SHOP_NAME
+        and offer.get("price") is not None
     ]
 
     # 3. Если подходящих предложений нет — сохраняем current_price и HOLD
@@ -72,7 +74,7 @@ async def recommend_price(
     # 4. Расчет: минимальная цена -1.5%, округление вниз до копейки, clamp по min_price
     min_competitor_price = min(Decimal(str(offer["price"])) for offer in valid_offers)
     discounted_price = (min_competitor_price * DISCOUNT_FACTOR).quantize(
-        Decimal("0.01"), rounding=ROUND_FLOOR
+        CENT, rounding=ROUND_FLOOR
     )
     recommended_price = max(discounted_price, min_p)
 
