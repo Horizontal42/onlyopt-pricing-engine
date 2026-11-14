@@ -18,7 +18,7 @@ python starter.py
 {"price": "4728.00", "decision": "APPLY", "reason": "Цена успешно рассчитана на основе предложений конкурентов"}
 ```
 
-### Запуск автоматических тестов (11 тестов)
+### Запуск автоматических тестов (15 тестов)
 Через `pytest`:
 ```bash
 pytest -v test_starter.py
@@ -32,7 +32,7 @@ python -m unittest -v test_starter.py
 
 ## Структура проекта
 - `starter.py` — исправленная функция `recommend_price` (с сохранением контракта интерфейса и полной поддержкой Python 3.10+).
-- `test_starter.py` — 11 модульных тестов на базе `unittest.IsolatedAsyncioTestCase` с фабриками моков (`make_fetch`, `make_timeout_fetch`, `make_error_fetch`).
+- `test_starter.py` — 15 модульных тестов на базе `unittest.IsolatedAsyncioTestCase` с фабриками моков (`make_fetch`, `make_timeout_fetch`, `make_error_fetch`).
 - `FINAL_SOLUTION.md` / `SOLUTION.md` — расширенная версия ответов по архитектуре и вопросам.
 
 ---
